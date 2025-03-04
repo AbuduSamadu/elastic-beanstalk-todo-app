@@ -35,10 +35,6 @@ jobs:
       - name: Deploy to Elastic Beanstalk
         run: |
           aws elasticbeanstalk create-application-version \
-            --application-name simple-job \
+            --application-name todo-app \
             --version-label ${{ github.sha }} \
             --source-bundle S3Bucket="abudu-samadu-todo-app",S3Key="todo-app-0.0.1-SNAPSHOT.jar"
-          
-          aws elasticbeanstalk update-environment \
-            --environment-name Simple-job-env \
-            --version-label ${{ github.sha }}
