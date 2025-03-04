@@ -69,11 +69,10 @@ jobs:
       - name: Upload ZIP file to S3
         uses: jakejarvis/s3-sync-action@master
         with:
-          args: --acl public-read --follow-symlinks --delete
           aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          args: sync ./target/todo-app.zip s3://your-s3-bucket-name/
-          region: us-east-1 # Replace with your AWS region
+          args: sync ./target/todo-app.zip s3://abudu-samadu-todo-app/
+          region: us-east-1
 
       # Step 3: Deploy to AWS Elastic Beanstalk
       - name: Deploy to AWS Elastic Beanstalk
@@ -81,8 +80,8 @@ jobs:
         with:
           aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          region: us-east-1 # Replace with your AWS region
-          application_name: todo-app # Replace with your Elastic Beanstalk application name
+          region: us-east-1
+          application_name: todo-app
           environment_name: todo-app-env
           version_label: ${{ github.sha }}
           deployment_package: ./target/todo-app.zip
