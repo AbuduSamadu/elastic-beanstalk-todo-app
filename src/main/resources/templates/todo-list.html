@@ -9,7 +9,7 @@
 <h1>To-Do List</h1>
 
 <!-- Form to add a new task -->
-<form action="/" method="post">
+<form th:action="@{/add}" method="post">
     <input type="text" name="todo" placeholder="Enter a task" required>
     <button type="submit">Add Task</button>
 </form>
