@@ -69,7 +69,7 @@ jobs:
       - name: Upload ZIP file to S3
         uses: jakejarvis/s3-sync-action@master
         with:
-          args: sync ./target/todo-app.zip s3://your-s3-bucket-name/
+          args: sync ./target/todo-app.zip s3://abudu-samadu-todo-app/
           aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           region: us-east-1 
