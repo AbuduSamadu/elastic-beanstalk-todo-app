@@ -1,0 +1,76 @@
+name: Spring Boot CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main # Trigger on pushes to the main branch
+  pull_request:
+    branches:
+      - main # Trigger on pull requests to the main branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Java
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17' # Use Java 17 (adjust as needed)
+          distribution: 'temurin'
+
+      # Step 3: Cache Maven dependencies
+      - name: Cache Maven packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-
+
+      # Step 4: Build the project
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
+
+      # Step 5: Run tests
+      - name: Run tests
+        run: mvn test
+
+      # Step 6: Package the application
+      - name: Package the application
+        run: mvn package
+
+      # Step 7: Upload the artifact
+      - name: Upload JAR file as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: todo-app-jar
+          path: target/*.jar
+
+  deploy:
+    needs: build # Ensure the build job completes before deployment
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Download the artifact
+      - name: Download JAR file
+        uses: actions/download-artifact@v3
+        with:
+          name: todo-app-jar
+          path: target/
+
+      # Step 2: Deploy to AWS Elastic Beanstalk
+      - name: Deploy to AWS Elastic Beanstalk
+        uses: einaregilsson/beanstalk-deploy@v18
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region: us-east-1a # Replace with your AWS region
+          application_name: todo-app # Replace with your Elastic Beanstalk application name
+          environment_name: todo-app-env 
+          version_label: ${{ github.sha }}
+          deployment_package: target/todo-app-0.0.1-SNAPSHOT.jar
