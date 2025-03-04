@@ -40,30 +40,42 @@ jobs:
       - name: Run tests
         run: mvn test
 
-      # Step 6: Package the application
-      - name: Package the application
-        run: mvn package
+      # Step 6: Create the ZIP file
+      - name: Create ZIP file
+        run: |
+          cd target
+          zip todo-app.zip todo-app-0.0.1-SNAPSHOT.jar
 
-      # Step 7: Upload the artifact
-      - name: Upload JAR file as artifact
+      # Step 7: Upload the ZIP file as artifact
+      - name: Upload ZIP file as artifact
         uses: actions/upload-artifact@v3
         with:
-          name: todo-app-jar
-          path: target/*.jar
+          name: todo-app-zip
+          path: target/todo-app.zip
 
   deploy:
     needs: build # Ensure the build job completes before deployment
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Download the artifact
-      - name: Download JAR file
+      # Step 1: Download the ZIP artifact
+      - name: Download ZIP file
         uses: actions/download-artifact@v3
         with:
-          name: todo-app-jar
-          path: target/
+          name: todo-app-zip
+          path: .
 
-      # Step 2: Deploy to AWS Elastic Beanstalk
+      # Step 2: Upload the ZIP file to S3
+      - name: Upload ZIP file to S3
+        uses: jakejarvis/s3-sync-action@master
+        with:
+          args: --acl public-read --follow-symlinks --delete
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          args: sync ./target/todo-app.zip s3://your-s3-bucket-name/
+          region: us-east-1 # Replace with your AWS region
+
+      # Step 3: Deploy to AWS Elastic Beanstalk
       - name: Deploy to AWS Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v18
         with:
@@ -71,6 +83,6 @@ jobs:
           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           region: us-east-1 # Replace with your AWS region
           application_name: todo-app # Replace with your Elastic Beanstalk application name
-          environment_name: todo-app-env 
+          environment_name: todo-app-env
           version_label: ${{ github.sha }}
-          deployment_package: target/todo-app-0.0.1-SNAPSHOT.jar
+          deployment_package: ./target/todo-app.zip
