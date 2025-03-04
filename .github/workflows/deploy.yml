@@ -1,0 +1,44 @@
+name: Deploy Java App to Elastic Beanstalk
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: '21'
+          distribution: 'adopt'
+
+      - name: Build with Maven
+        run: mvn clean package
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Upload JAR to S3
+        run: aws s3 cp target/todo-app-0.0.1-SNAPSHOT.jar s3://abudu-samadu-todo-app/todo-app-0.0.1-SNAPSHOT.jar
+
+      - name: Deploy to Elastic Beanstalk
+        run: |
+          aws elasticbeanstalk create-application-version \
+            --application-name simple-job \
+            --version-label ${{ github.sha }} \
+            --source-bundle S3Bucket="abudu-samadu-todo-app",S3Key="todo-app-0.0.1-SNAPSHOT.jar"
+          
+          aws elasticbeanstalk update-environment \
+            --environment-name Simple-job-env \
+            --version-label ${{ github.sha }}
